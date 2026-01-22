@@ -1,0 +1,37 @@
+name: Deploy to NAS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+      
+      - name: Deploy to Synology
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.NAS_HOST }}
+          username: ${{ secrets.NAS_USER }}
+          key: ${{ secrets.NAS_SSH_KEY }}
+          source: "server.js,package.json,public/*,Dockerfile,docker-compose.yml"
+          target: "/volume2/docker/monopoly-deal/"
+      
+      - name: Rebuild and restart container
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.NAS_HOST }}
+          username: ${{ secrets.NAS_USER }}
+          key: ${{ secrets.NAS_SSH_KEY }}
+          script: |
+            cd /volume2/docker/monopoly-deal
+            docker-compose down || true
+            docker-compose build --no-cache
+            docker-compose up -d
