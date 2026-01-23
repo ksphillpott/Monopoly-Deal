@@ -31,7 +31,8 @@ jobs:
           username: ${{ secrets.NAS_USER }}
           key: ${{ secrets.NAS_SSH_KEY }}
           script: |
+            export PATH="/usr/local/bin:$PATH"
             cd /volume2/docker/monopoly-deal
-            docker compose down || true
-            docker compose build --no-cache
-            docker compose up -d
+            /usr/local/bin/docker compose down || true
+            /usr/local/bin/docker compose build --no-cache
+            /usr/local/bin/docker compose up -d
